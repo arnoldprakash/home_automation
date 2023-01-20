@@ -1,0 +1,86 @@
+#include<FirebaseArduino.h>
+  #include<ESP8266WiFi.h>
+  #include<Wire.h>
+  #define FIREHOST_HOST "link_from_firebase.firebaseio.com"
+  #define FIREHASH_AUTH "Fire_Hash_from_firebase"
+  #define WIFI_SSID "wifi_name"
+  #define WIFI_PASSWORD "wifi_Password"
+
+  
+  int IRSensor = 4;// 
+  int bulb =13; // connect LED to Arduino pin 13
+  int FAN=15;
+  void setup()
+  { 
+    Serial.begin(9600); // Init Serial at 115200 Baud Rate.
+    Serial.println("Serial Working"); // Test to check if serial is working or not
+    WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
+    pinMode(2,OUTPUT);
+    while(WiFi.status() != WL_CONNECTED){
+      delay(10);
+      Serial.print(".");
+      digitalWrite(2,LOW);
+      delay(100);
+      digitalWrite(2,HIGH);
+        delay(100);
+    }
+    digitalWrite(2,LOW);
+    Serial.println("WiFi Connected");
+     digitalWrite(bulb,LOW);
+       digitalWrite(FAN,LOW);
+    Firebase.begin(FIREHOST_HOST,FIREHASH_AUTH);
+    pinMode(IRSensor, INPUT); // IR Sensor pin INPUT
+    pinMode(bulb, OUTPUT); // LED Pin Output
+    pinMode(FAN,OUTPUT);
+  }
+  
+  void loop()
+  {
+    int st = digitalRead(IRSensor); // Set the GPIO as Input
+    String mod=Firebase.getString("mode");
+    delay(100);
+   Serial.println(mod);
+    Serial.println(st);
+    if(mod=="3")
+    {
+          Serial.println("auto");
+    if(st==1)
+    {
+       Firebase.setString("Fan_Status","ON");
+       Firebase.setString("light_Status","ON");
+      digitalWrite(FAN,HIGH);
+      digitalWrite(bulb,HIGH);
+      Serial.println("detected");
+    }
+    else{
+    
+      digitalWrite(bulb,LOW);
+       digitalWrite(FAN,LOW);
+      Serial.println("not detected");
+       Firebase.setString("Fan_Status","OFF");
+       Firebase.setString("light_Status","OFF");
+    }
+    }
+
+  if(mod=="4"){
+      Serial.println("manual");
+      String lt=Firebase.getString("B");
+      String fan=Firebase.getString("F");
+      if(lt=="1")
+      {
+        digitalWrite(bulb,HIGH);
+      }
+      else if(lt=="0")
+      {
+         digitalWrite(bulb,LOW);
+      }
+      if(fan=="1")
+      {
+        digitalWrite(FAN,HIGH);
+      }
+      else if(fan=="0")
+      {
+         digitalWrite(FAN,LOW);
+      }
+    }
+  }
